@@ -144,6 +144,15 @@ The installer will:
 
 ## 🚨 Troubleshooting
 
+### What is jq and why do I need it?
+
+**jq** is a command-line JSON processor that the installer uses to:
+- Parse the `assets.json` file (read URLs, paths, checksums)
+- Extract specific fields from JSON data
+- Process each file entry for downloading
+
+**Good news:** The installer automatically installs jq if it's missing!
+
 ### "Command not found" errors
 
 **The installer now auto-installs missing dependencies!** But if you encounter issues:
@@ -182,11 +191,18 @@ brew install git curl jq
 
 The script tries to find Forge in these locations:
 1. Current directory (if contains `webui.sh` or `launch.py`)
-2. `~/stable-diffusion-webui-forge`
+2. Parent directory (if contains `webui.sh`, `launch.py`, `webui-user.bat`, etc.)
+3. Two levels up (for deeply nested folders)
+4. `~/stable-diffusion-webui-forge` (default fallback)
 
 **To specify custom location:**
 ```bash
 FORGE_HOME="/path/to/your/forge" bash bootstrap.sh
+```
+
+**Example for your case:**
+```bash
+FORGE_HOME="D:/~Модели/Forge-StableDif/webui" bash bootstrap.sh
 ```
 
 ### Download interruptions

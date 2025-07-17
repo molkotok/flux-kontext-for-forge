@@ -140,12 +140,23 @@ install_missing_dependencies
 
 # Попытка определить расположение Forge
 if [ -z "${FORGE_HOME:-}" ]; then
+  # Проверяем текущую папку
   if [ -f "./webui.sh" ] || [ -f "./launch.py" ]; then
     FORGE_HOME=$(pwd)
+    echo "✅ Detected Forge location: $FORGE_HOME"
+  # Проверяем родительскую папку (часто скрипт запускается из подпапки)
+  elif [ -f "../webui.sh" ] || [ -f "../launch.py" ] || [ -f "../webui-user.bat" ] || [ -f "../webui-user.sh" ]; then
+    FORGE_HOME=$(cd .. && pwd)
+    echo "✅ Detected Forge location: $FORGE_HOME"
+  # Проверяем на два уровня выше (для глубоко вложенных папок)
+  elif [ -f "../../webui.sh" ] || [ -f "../../launch.py" ] || [ -f "../../webui-user.bat" ] || [ -f "../../webui-user.sh" ]; then
+    FORGE_HOME=$(cd ../.. && pwd)
     echo "✅ Detected Forge location: $FORGE_HOME"
   else
     FORGE_HOME="$HOME/stable-diffusion-webui-forge"
     echo "⚠️ Using default path: $FORGE_HOME"
+    echo "💡 If this is wrong, set FORGE_HOME manually:"
+    echo "    FORGE_HOME='/path/to/your/forge' bash bootstrap.sh"
   fi
 fi
 

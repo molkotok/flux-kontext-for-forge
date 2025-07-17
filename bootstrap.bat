@@ -6,6 +6,20 @@ echo    Flux Kontext Installer for Forge
 echo ====================================
 echo.
 
+REM Check if help is requested
+if /i "%~1"=="--help" (
+    echo Usage: %~nx0 [--help]
+    echo.
+    echo Options:
+    echo   --help    Show this help message
+    echo.
+    echo Examples:
+    echo   %~nx0           # Normal installation
+    echo.
+    pause
+    exit /b 0
+)
+
 REM Check if we're in the correct directory
 if not exist "%~dp0bootstrap.sh" (
     echo ❌ Error: bootstrap.sh not found in this directory.
@@ -71,22 +85,7 @@ echo.
 REM Run the bootstrap script
 "%BASH_PATH%" "%~dp0bootstrap.sh"
 
-REM Check the exit code
-if %errorlevel% equ 0 (
-    echo.
-    echo ✅ Installation completed successfully!
-    echo.
-    echo You can now start Forge and use Flux Kontext.
-) else (
-    echo.
-    echo ❌ Installation failed with error code %errorlevel%.
-    echo.
-    echo What to do:
-    echo 1. Check your internet connection
-    echo 2. Make sure you have enough disk space (~8GB)
-    echo 3. Try running this script again - it will resume downloads
-    echo 4. If the problem persists, check the troubleshooting section in README.md
-)
+REM Bootstrap script completed - exit code handling is done by bootstrap.sh
 
 echo.
 echo Press any key to close this window...

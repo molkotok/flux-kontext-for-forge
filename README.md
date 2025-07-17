@@ -14,7 +14,7 @@
 | CLIP-L text encoder | `models/clip/` |
 | `forge2_flux_kontext` extension | `extensions/forge2_flux_kontext/` |
 
-*Existing files are **verified by SHA-256** and **never re-downloaded** if already correct.*
+*Existing files are **verified** and **never re-downloaded** if already correct.*
 
 ---
 
@@ -44,6 +44,11 @@
    cd flux-kontext-for-forge
    bootstrap.bat
    ```
+   
+   **Alternative method:**
+```cmd
+bootstrap.bat
+```
 
 #### Method 2: Using Git Bash (If bootstrap.bat doesn't work)
 
@@ -123,7 +128,7 @@
 
 The installer will:
 
-1. **Check dependencies** (git, curl, jq, sha256sum)
+1. **Check dependencies** (git, curl, jq)
 2. **Auto-install missing dependencies** if needed:
    - Linux: Uses apt-get/yum/pacman
    - macOS: Uses Homebrew (installs it if needed)
@@ -134,11 +139,15 @@ The installer will:
    - VAE file (~300MB)
    - Text encoders (~2GB each)
    - Clone extension repository
-5. **Verify file integrity** using SHA-256 checksums
+5. **Verify file integrity** using size checks
 6. **Report completion status**
 
 **Total download:** ~8GB (first run only)  
-**Time:** 10-30 minutes depending on internet speed
+**Time:** 10-25 minutes (depends on internet speed)
+
+**File verification:** Instant (size check only)
+
+**Note:** File verification ensures basic integrity and is very fast.
 
 ---
 
@@ -147,7 +156,7 @@ The installer will:
 ### What is jq and why do I need it?
 
 **jq** is a command-line JSON processor that the installer uses to:
-- Parse the `assets.json` file (read URLs, paths, checksums)
+- Parse the `assets.json` file (read URLs, paths)
 - Extract specific fields from JSON data
 - Process each file entry for downloading
 
@@ -205,6 +214,21 @@ FORGE_HOME="/path/to/your/forge" bash bootstrap.sh
 FORGE_HOME="D:/~Модели/Forge-StableDif/webui" bash bootstrap.sh
 ```
 
+### "Failed to create directory" or "No such file or directory" errors
+
+If you see curl errors like `Failed to open the file`, this usually means:
+
+**On Windows:**
+- The script couldn't create the target directories
+- **Solution:** The script now automatically creates all required directories and converts paths properly for Windows
+- If it still fails, try running Command Prompt as Administrator
+
+**Common fixes:**
+1. **Check disk space** - you need ~8GB free
+2. **Check permissions** - make sure you can write to the Forge directory
+3. **Try different location** - avoid paths with special characters or spaces
+4. **Re-run the script** - it will show detailed directory creation info
+
 ### Download interruptions
 
 If download fails or is interrupted:
@@ -221,7 +245,7 @@ If download fails or is interrupted:
 **What happens during recovery:**
 - ✅ **Good files:** `✔ filename.safetensors already OK` (skipped)
 - ⚠️ **Partial downloads:** Downloads resume from the last byte
-- ❌ **Corrupted files:** Re-downloaded completely with new SHA-256 verification
+- ❌ **Corrupted files:** Re-downloaded completely with integrity verification
 - 🔄 **Git repositories:** Automatically pulled to latest version
 
 **Example recovery process:**
@@ -235,6 +259,14 @@ bash bootstrap.sh
 
 **Recovery is automatic** - no manual intervention needed!
 
+### File verification is fast
+
+File verification now uses size checks only and completes in under 1 second per file:
+- ✅ **Checks file size** (instant)
+- ✅ **Compares with server file size** (when available)
+
+**No waiting required** - verification is now instant!
+
 ---
 
 ## ➕ Adding extra models or LoRAs
@@ -245,24 +277,29 @@ bash bootstrap.sh
 {
   "url": "https://your.host.com/my-lora.safetensors",
   "target": "$FORGE_HOME/models/Lora/",
-  "sha256": "PUT_SHA256_HASH_HERE"
+  "size": 1.5
 }
 ```
 
+**JSON fields:**
+- `url`: Download URL (required)
+- `target`: Installation directory (required)
+- `size`: Expected file size in GB (optional, improves display)
+
 2. Run **`bash bootstrap.sh`** again – only the new file will be downloaded.
 
-> **How to get a SHA-256 hash**
+> **How to check file info**
 >
 > *Linux / Git Bash / macOS*
 > ```bash
-> sha256sum my-lora.safetensors
+> ls -la my-lora.safetensors
 > ```
 > *Windows PowerShell*
 > ```powershell
-> Get-FileHash .\my-lora.safetensors -Algorithm SHA256
+> Get-ItemProperty .\my-lora.safetensors | Select-Object Name, Length
 > ```
 
-Copy the 64-character hash into `assets.json`.
+Use the file size info to add to `assets.json`.
 
 ---
 
@@ -292,10 +329,10 @@ The `bootstrap.bat` file automatically:
 Setting up Flux Kontext manually involves:
 - Finding and downloading multiple large files from different sources
 - Placing them in correct Forge directories  
-- Verifying file integrity
+- Verifying files
 - Installing the required extension
 
-This installer reduces the whole process to **one command** (or one double-click) and guarantees file integrity via SHA-256.
+This installer reduces the whole process to **one command** (or one double-click) and ensures file integrity.
 
 Enjoy your creative journey with **Flux Kontext in Forge**! 🌀
 

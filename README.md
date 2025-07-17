@@ -40,7 +40,7 @@
 
 2. **Run the installer:**
    ```cmd
-   git clone https://github.com/your-username/flux-kontext-for-forge.git
+   git clone https://github.com/molkotok/flux-kontext-for-forge.git
    cd flux-kontext-for-forge
    bash bootstrap.sh
    ```
@@ -54,7 +54,7 @@
 2. **Navigate to Forge and run:**
    ```powershell
    cd "C:\path\to\your\stable-diffusion-webui-forge"
-   git clone https://github.com/your-username/flux-kontext-for-forge.git
+   git clone https://github.com/molkotok/flux-kontext-for-forge.git
    cd flux-kontext-for-forge
    bash bootstrap.sh
    ```
@@ -76,7 +76,7 @@
 3. **Right-click in empty space** → "Open in Terminal" (or similar option)
 4. **Run the installer:**
    ```bash
-   git clone https://github.com/your-username/flux-kontext-for-forge.git
+   git clone https://github.com/molkotok/flux-kontext-for-forge.git
    cd flux-kontext-for-forge
    bash bootstrap.sh
    ```
@@ -87,7 +87,7 @@
 2. **Navigate to Forge and run:**
    ```bash
    cd ~/stable-diffusion-webui-forge  # or your custom path
-   git clone https://github.com/your-username/flux-kontext-for-forge.git
+   git clone https://github.com/molkotok/flux-kontext-for-forge.git
    cd flux-kontext-for-forge
    bash bootstrap.sh
    ```
@@ -98,7 +98,7 @@
 2. **Navigate to Forge and run:**
    ```bash
    cd ~/stable-diffusion-webui-forge  # or your custom path
-   git clone https://github.com/your-username/flux-kontext-for-forge.git
+   git clone https://github.com/molkotok/flux-kontext-for-forge.git
    cd flux-kontext-for-forge
    bash bootstrap.sh
    ```

@@ -42,10 +42,24 @@
    ```cmd
    git clone https://github.com/molkotok/flux-kontext-for-forge.git
    cd flux-kontext-for-forge
+   bootstrap.bat
+   ```
+
+#### Method 2: Using Git Bash (If bootstrap.bat doesn't work)
+
+1. **Navigate to your Forge folder:**
+   - Open Windows Explorer
+   - Go to your Forge installation folder
+   - Right-click in empty space → "Git Bash Here"
+
+2. **Run the installer:**
+   ```bash
+   git clone https://github.com/molkotok/flux-kontext-for-forge.git
+   cd flux-kontext-for-forge
    bash bootstrap.sh
    ```
 
-#### Method 2: Using PowerShell
+#### Method 3: Using PowerShell
 
 1. **Open PowerShell as user (not administrator needed):**
    - Press `Win + X` and select "Windows PowerShell"
@@ -56,10 +70,10 @@
    cd "C:\path\to\your\stable-diffusion-webui-forge"
    git clone https://github.com/molkotok/flux-kontext-for-forge.git
    cd flux-kontext-for-forge
-   bash bootstrap.sh
+   ./bootstrap.bat
    ```
 
-#### Method 3: Double-click installer (Easiest)
+#### Method 4: Double-click installer (Easiest)
 
 1. **Download this repository:**
    - Click the green "Code" button → "Download ZIP"
@@ -130,7 +144,21 @@ The installer will:
 
 **Windows:**
 - Install [Git for Windows](https://git-scm.com/download/win) (includes bash)
-- Restart Command Prompt after installation
+- **Important:** In regular Command Prompt, use `bootstrap.bat` instead of `bash bootstrap.sh`
+- If you want to use `bash bootstrap.sh`, right-click in folder → "Git Bash Here"
+- Restart Command Prompt after Git installation
+
+**If you see "WSL ERROR: CreateProcessCommon" when running `bash bootstrap.sh`:**
+```cmd
+# Instead of this (which causes WSL error):
+bash bootstrap.sh
+
+# Use this in Command Prompt:
+bootstrap.bat
+
+# Or switch to Git Bash:
+# Right-click in folder → "Git Bash Here", then run: bash bootstrap.sh
+```
 
 **Linux/macOS:**
 ```bash
@@ -218,27 +246,22 @@ Copy the 64-character hash into `assets.json`.
 
 ## 📑 bootstrap.bat (Windows users)
 
-```bat
-@echo off
-REM === Flux Kontext installer for Forge (Windows) ===
-if not exist "%~dp0bootstrap.sh" (
-    echo Please run this file from inside the "flux-kontext-for-forge" folder.
-    pause
-    exit /b 1
-)
+The `bootstrap.bat` file automatically:
+- **Finds Git Bash** on your system (checks common installation locations)
+- **Validates files** (ensures bootstrap.sh and assets.json exist)
+- **Runs the installer** with proper error handling
+- **Shows helpful messages** if something goes wrong
 
-for /F %%i in ('where bash ^2^>nul') do set "BASH=%%i"
-if "%BASH%"=="" (
-    echo Git Bash not found. Install Git for Windows: https://git-scm.com/download/win
-    pause
-    exit /b 1
-)
+**Features:**
+- ✅ Automatically detects Git Bash installation
+- ✅ Provides clear error messages and solutions
+- ✅ Shows installation progress and results
+- ✅ Handles common installation issues
 
-"%BASH%" "%~dp0bootstrap.sh"
-echo.
-echo === Installation finished ===
-pause
-```
+**If bootstrap.bat doesn't work:**
+1. Install [Git for Windows](https://git-scm.com/download/win)
+2. Right-click in folder → "Git Bash Here"
+3. Run: `bash bootstrap.sh`
 
 ---
 

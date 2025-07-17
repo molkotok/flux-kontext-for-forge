@@ -1,0 +1,26 @@
+[
+  {
+    "url": "https://huggingface.co/6chan/flux1-kontext-dev-fp8/resolve/main/flux1-kontext-dev-fp8-e4m3fn.safetensors",
+    "target": "$FORGE_HOME/models/Stable-diffusion/",
+    "sha256": "e7c137d2a8c3d1a7765fc7538f0744eee8f3c58863226124e066c8b781c170df"
+  },
+  {
+    "url": "https://huggingface.co/ffxvs/vae-flux/resolve/main/ae.safetensors",
+    "target": "$FORGE_HOME/models/VAE/",
+    "sha256": "afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38"
+  },
+  {
+    "url": "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors",
+    "target": "$FORGE_HOME/models/clip/",
+    "sha256": "660c6f5b1abae9dc498ac2d21e1347d2abdb0cf6c0c0c8576cd796491d9a6cdd"
+  },
+  {
+    "url": "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp8_e4m3fn.safetensors",
+    "target": "$FORGE_HOME/models/text_encoder/",
+    "sha256": "7d330da4816157540d6bb7838bf63a0f02f573fc48ca4d8de34bb0cbfd514f09"
+  },
+  {
+    "git": "https://github.com/DenOfEquity/forge2_flux_kontext.git",
+    "target": "$FORGE_HOME/extensions/forge2_flux_kontext"
+  }
+]

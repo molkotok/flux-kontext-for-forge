@@ -1,15 +1,132 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Проверка наличия необходимых утилит
-check_dependencies() {
-    local deps=("jq" "curl" "git" "sha256sum")
+# Функция для определения ОС
+detect_os() {
+    case "$(uname -s)" in
+        Linux*)     echo "linux";;
+        Darwin*)    echo "macos";;
+        CYGWIN*|MINGW32*|MSYS*|MINGW*) echo "windows";;
+        *)          echo "unknown";;
+    esac
+}
+
+# Автоматическая установка недостающих зависимостей
+install_missing_dependencies() {
+    local os_type=$(detect_os)
+    local missing_deps=()
+    
+    # Проверяем какие зависимости отсутствуют
+    local deps=("curl" "git" "sha256sum")
     for dep in "${deps[@]}"; do
         if ! command -v "$dep" &>/dev/null; then
-            echo "❌ Required dependency '$dep' not found"
-            exit 1
+            missing_deps+=("$dep")
         fi
     done
+    
+    # Специальная проверка для jq (может потребоваться установка)
+    if ! command -v jq &>/dev/null; then
+        missing_deps+=("jq")
+    fi
+    
+    if [ ${#missing_deps[@]} -eq 0 ]; then
+        echo "✅ All dependencies are available"
+        return 0
+    fi
+    
+    echo "📦 Installing missing dependencies: ${missing_deps[*]}"
+    
+    case "$os_type" in
+        "linux")
+            # Определяем дистрибутив Linux
+            if command -v apt-get &>/dev/null; then
+                echo "🐧 Installing dependencies using apt-get..."
+                for dep in "${missing_deps[@]}"; do
+                    case "$dep" in
+                        "sha256sum") sudo apt-get update && sudo apt-get install -y coreutils;;
+                        *) sudo apt-get update && sudo apt-get install -y "$dep";;
+                    esac
+                done
+            elif command -v yum &>/dev/null; then
+                echo "🐧 Installing dependencies using yum..."
+                for dep in "${missing_deps[@]}"; do
+                    case "$dep" in
+                        "sha256sum") sudo yum install -y coreutils;;
+                        *) sudo yum install -y "$dep";;
+                    esac
+                done
+            elif command -v pacman &>/dev/null; then
+                echo "🐧 Installing dependencies using pacman..."
+                for dep in "${missing_deps[@]}"; do
+                    case "$dep" in
+                        "sha256sum") sudo pacman -S --noconfirm coreutils;;
+                        *) sudo pacman -S --noconfirm "$dep";;
+                    esac
+                done
+            else
+                echo "❌ Unsupported Linux distribution. Please install manually: ${missing_deps[*]}"
+                return 1
+            fi
+            ;;
+        "macos")
+            echo "🍎 Installing dependencies using brew..."
+            if ! command -v brew &>/dev/null; then
+                echo "📦 Installing Homebrew first..."
+                /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            fi
+            for dep in "${missing_deps[@]}"; do
+                case "$dep" in
+                    "sha256sum") brew install coreutils;;
+                    *) brew install "$dep";;
+                esac
+            done
+            ;;
+        "windows")
+            echo "🪟 Installing dependencies for Windows..."
+            
+            # Для Windows пытаемся установить через различные способы
+            for dep in "${missing_deps[@]}"; do
+                case "$dep" in
+                    "jq")
+                        echo "  Installing jq..."
+                        if command -v winget &>/dev/null; then
+                            winget install jqlang.jq
+                        elif command -v choco &>/dev/null; then
+                            choco install jq -y
+                        elif command -v scoop &>/dev/null; then
+                            scoop install jq
+                        else
+                            # Пытаемся скачать статический бинарник jq
+                            echo "  Downloading jq binary..."
+                            local jq_url="https://github.com/jqlang/jq/releases/latest/download/jq-windows-amd64.exe"
+                            local jq_path="/usr/local/bin/jq.exe"
+                            mkdir -p "$(dirname "$jq_path")"
+                            if curl -L -o "$jq_path" "$jq_url" 2>/dev/null; then
+                                chmod +x "$jq_path"
+                                echo "  ✅ jq installed to $jq_path"
+                            else
+                                echo "  ❌ Failed to download jq. Please install manually."
+                                echo "  Download from: https://jqlang.github.io/jq/download/"
+                                return 1
+                            fi
+                        fi
+                        ;;
+                    "curl"|"git"|"sha256sum")
+                        echo "  ❌ $dep is required but not found."
+                        echo "  Please install Git for Windows: https://git-scm.com/download/win"
+                        return 1
+                        ;;
+                esac
+            done
+            ;;
+        *)
+            echo "❌ Unsupported operating system. Please install manually: ${missing_deps[*]}"
+            return 1
+            ;;
+    esac
+    
+    echo "✅ Dependencies installed successfully"
+    return 0
 }
 
 # Проверка наличия assets.json
@@ -18,7 +135,8 @@ if [ ! -f "assets.json" ]; then
     exit 1
 fi
 
-check_dependencies
+# Установка недостающих зависимостей
+install_missing_dependencies
 
 # Попытка определить расположение Forge
 if [ -z "${FORGE_HOME:-}" ]; then

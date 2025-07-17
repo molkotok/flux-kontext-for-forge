@@ -124,14 +124,18 @@
 The installer will:
 
 1. **Check dependencies** (git, curl, jq, sha256sum)
-2. **Detect your Forge location** automatically
-3. **Download required files** with progress indicators:
+2. **Auto-install missing dependencies** if needed:
+   - Linux: Uses apt-get/yum/pacman
+   - macOS: Uses Homebrew (installs it if needed)
+   - Windows: Uses winget/choco/scoop or downloads binaries
+3. **Detect your Forge location** automatically
+4. **Download required files** with progress indicators:
    - Flux model checkpoint (~4GB)
    - VAE file (~300MB)
    - Text encoders (~2GB each)
    - Clone extension repository
-4. **Verify file integrity** using SHA-256 checksums
-5. **Report completion status**
+5. **Verify file integrity** using SHA-256 checksums
+6. **Report completion status**
 
 **Total download:** ~8GB (first run only)  
 **Time:** 10-30 minutes depending on internet speed
@@ -141,6 +145,8 @@ The installer will:
 ## 🚨 Troubleshooting
 
 ### "Command not found" errors
+
+**The installer now auto-installs missing dependencies!** But if you encounter issues:
 
 **Windows:**
 - Install [Git for Windows](https://git-scm.com/download/win) (includes bash)
@@ -160,7 +166,7 @@ bootstrap.bat
 # Right-click in folder → "Git Bash Here", then run: bash bootstrap.sh
 ```
 
-**Linux/macOS:**
+**Linux/macOS (manual installation if auto-install fails):**
 ```bash
 # Ubuntu/Debian
 sudo apt install git curl jq

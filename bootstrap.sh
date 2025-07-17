@@ -165,6 +165,40 @@ if [ ! -d "$FORGE_HOME" ]; then
   exit 1
 fi
 
+# Проверяем и создаем базовые папки models
+echo "🔍 Checking Forge models directory structure..."
+models_base="$FORGE_HOME/models"
+if [ ! -d "$models_base" ]; then
+    echo "📁 Creating models directory: $models_base"
+    mkdir -p "$models_base" || {
+        echo "❌ Failed to create models directory"
+        exit 1
+    }
+fi
+
+# Создаем основные папки models если их нет
+required_dirs=("Stable-diffusion" "VAE" "clip" "text_encoder" "extensions")
+for dir in "${required_dirs[@]}"; do
+    target_dir="$FORGE_HOME/$dir"
+    if [ "$dir" = "extensions" ]; then
+        # extensions в корне Forge
+        target_dir="$FORGE_HOME/extensions"
+    else
+        # остальные в models/
+        target_dir="$models_base/$dir"
+    fi
+    
+    if [ ! -d "$target_dir" ]; then
+        echo "📁 Creating directory: $target_dir"
+        mkdir -p "$target_dir" || {
+            echo "❌ Failed to create directory: $target_dir"
+            exit 1
+        }
+    fi
+done
+
+echo "✅ Forge directory structure verified"
+
 # Автоматическая установка gdown, если понадобится GDrive
 need_gdown() { 
     [ -f "assets.json" ] && grep -q '"gdrive://' assets.json; 
@@ -181,14 +215,41 @@ expand_path() {
     # Заменяем только известные безопасные переменные
     path="${path//\$FORGE_HOME/$FORGE_HOME}"
     path="${path//\$HOME/$HOME}"
+    
+    # Нормализуем путь: убираем двойные слеши
+    path="${path//\/\//\/}"
+    
     echo "$path"
 }
 
 download() {
     local url="$1" dst="$2" sum="$3"
-    mkdir -p "$dst"
+    
+    # Убираем trailing slash из пути для нормализации
+    dst="${dst%/}"
+    
+    # Создаем папку
+    echo "📁 Creating directory: $dst"
+    if ! mkdir -p "$dst"; then
+        echo "❌ Failed to create directory: $dst"
+        echo "📍 Current working directory: $(pwd)"
+        echo "📍 Checking parent directory permissions..."
+        ls -la "$(dirname "$dst")" || echo "❌ Parent directory not accessible"
+        return 1
+    fi
+    
+    # Проверяем что папка создалась
+    if [ ! -d "$dst" ]; then
+        echo "❌ Directory was not created: $dst"
+        return 1
+    fi
+    
+    echo "✅ Directory created successfully: $dst"
+    
     local fname="$dst/$(basename "$url")"
-
+    
+    echo "📄 Target file: $fname"
+    
     # Если файл уже корректный – ничего не делаем
     if [ -f "$fname" ] && sha256sum -c <<<"$sum  $fname" 2>/dev/null; then
         echo "✔ $(basename "$fname") already OK"

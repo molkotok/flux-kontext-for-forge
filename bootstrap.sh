@@ -407,28 +407,126 @@ download() {
     echo "↓ Downloading from Google Drive ..."
     case "$url" in
       gdrive://*)
+          # Handle existing .part files intelligently
+          echo "🔍 Checking for existing .part files..."
+          local dst_dir_path=$(convert_path_for_curl "$dst")
+          local part_files=$(find "$dst" -name "*.part" -type f 2>/dev/null)
+          
+          if [ -n "$part_files" ]; then
+              echo "📁 Found .part files from previous download:"
+              echo "$part_files"
+              
+              # Try to determine if .part file is actually complete
+              local part_file
+              while IFS= read -r part_file; do
+                  if [ -f "$part_file" ]; then
+                      local part_size=$(stat -c%s "$part_file" 2>/dev/null || stat -f%z "$part_file" 2>/dev/null || echo "0")
+                      local part_size_mb=$((part_size / 1048576))
+                      
+                      echo "   • $(basename "$part_file"): $(format_file_size "$part_size")"
+                      
+                      # If file is reasonably large (>50MB), it might be complete
+                      if [ "$part_size" -gt 52428800 ]; then
+                          echo "🔄 Trying to recover complete .part file..."
+                          
+                          # Try to rename .part file to proper extension
+                          local recovered_name="${part_file%.part}"
+                          if [[ "$recovered_name" != *.* ]]; then
+                              # If no extension, add .safetensors as default for Lora
+                              recovered_name="${recovered_name}.safetensors"
+                          fi
+                          
+                          if mv "$part_file" "$recovered_name" 2>/dev/null; then
+                              echo "✅ Recovered file as: $(basename "$recovered_name")"
+                              fname="$recovered_name"
+                              # Skip download since we recovered the file
+                              echo "🔍 Verifying recovered file integrity..."
+                              if verify_file_integrity "$fname" "$url"; then
+                                  echo "✅ $(basename "$fname") recovered and verified successfully"
+                                  return 0
+                              else
+                                  echo "⚠️ Recovered file seems corrupted, will re-download"
+                                  rm -f "$recovered_name" 2>/dev/null
+                              fi
+                          else
+                              echo "⚠️ Could not rename .part file, will clean up and re-download"
+                              rm -f "$part_file" 2>/dev/null
+                          fi
+                      else
+                          echo "⚠️ .part file too small, likely incomplete - removing"
+                          rm -f "$part_file" 2>/dev/null
+                      fi
+                  fi
+              done <<< "$part_files"
+          fi
+          
           # Try different ways to run gdown
           local gdown_success=false
-          local dst_dir_path=$(convert_path_for_curl "$dst")
+          local gdown_exit_code=0
           
           # Method 1: Try gdown directly
           if command -v gdown &>/dev/null; then
-              if gdown -c --no-cookies "${url#gdrive://}" -O "$dst_dir_path/"; then
+              gdown -c --no-cookies "${url#gdrive://}" -O "$dst_dir_path/"
+              gdown_exit_code=$?
+              if [ $gdown_exit_code -eq 0 ]; then
                   gdown_success=true
               fi
           fi
           
           # Method 2: Try python -m gdown
           if [ "$gdown_success" = false ]; then
-              if python -m gdown -c --no-cookies "${url#gdrive://}" -O "$dst_dir_path/"; then
+              python -m gdown -c --no-cookies "${url#gdrive://}" -O "$dst_dir_path/"
+              gdown_exit_code=$?
+              if [ $gdown_exit_code -eq 0 ]; then
                   gdown_success=true
               fi
           fi
           
           # Method 3: Try python3 -m gdown
           if [ "$gdown_success" = false ]; then
-              if python3 -m gdown -c --no-cookies "${url#gdrive://}" -O "$dst_dir_path/" 2>/dev/null; then
+              python3 -m gdown -c --no-cookies "${url#gdrive://}" -O "$dst_dir_path/" 2>/dev/null
+              gdown_exit_code=$?
+              if [ $gdown_exit_code -eq 0 ]; then
                   gdown_success=true
+              fi
+          fi
+          
+          # Find the downloaded file (gdown saves with original name)
+          echo "🔍 Looking for downloaded file..."
+          local downloaded_file=""
+          
+          # Method 1: Look for .safetensors files first
+          if [ -d "$dst" ]; then
+              downloaded_file=$(find "$dst" -maxdepth 1 -name "*.safetensors" -type f | head -1)
+          fi
+          
+          # Method 2: Look for other common extensions
+          if [ -z "$downloaded_file" ] && [ -d "$dst" ]; then
+              downloaded_file=$(find "$dst" -maxdepth 1 \( -name "*.pt" -o -name "*.ckpt" -o -name "*.pth" \) -type f | head -1)
+          fi
+          
+          # Method 3: Find any file (excluding .part files)
+          if [ -z "$downloaded_file" ] && [ -d "$dst" ]; then
+              downloaded_file=$(find "$dst" -maxdepth 1 -type f ! -name "*.part" -exec ls -t {} + 2>/dev/null | head -1)
+          fi
+          
+          # Check if file was found
+          if [ -n "$downloaded_file" ] && [ -f "$downloaded_file" ]; then
+              fname="$downloaded_file"
+              echo "✅ Found downloaded file: $(basename "$fname")"
+              # Even if gdown reported an error, if we have the file, consider it successful
+              gdown_success=true
+          else
+              echo "❌ Could not find downloaded file in $dst"
+              echo "📁 Directory contents:"
+              ls -la "$dst" 2>/dev/null || echo "   (empty or inaccessible)"
+              
+              # Check if there are any .part files that might indicate partial download
+              local part_files=$(find "$dst" -name "*.part" -type f 2>/dev/null)
+              if [ -n "$part_files" ]; then
+                  echo "⚠️ Found incomplete download files:"
+                  echo "$part_files"
+                  echo "💡 Try running the script again to resume the download"
               fi
           fi
           
@@ -438,30 +536,7 @@ download() {
               echo "   • Make sure the file has public access or link sharing enabled"
               echo "   • Try running: python -m pip install --user --upgrade gdown"
               echo "   • Check if the Google Drive link is correct"
-              return 1
-          fi
-          
-          # Find the downloaded file (gdown saves with original name)
-          echo "🔍 Looking for downloaded file..."
-          local downloaded_file=""
-          
-          # Method 1: Find the newest file in directory
-          if [ -d "$dst" ]; then
-              downloaded_file=$(find "$dst" -maxdepth 1 -type f -exec ls -t {} + 2>/dev/null | head -1)
-          fi
-          
-          # Method 2: If still not found, try ls approach
-          if [ -z "$downloaded_file" ] && [ -d "$dst" ]; then
-              downloaded_file=$(ls -t "$dst"/*.* 2>/dev/null | head -1)
-          fi
-          
-          if [ -n "$downloaded_file" ] && [ -f "$downloaded_file" ]; then
-              fname="$downloaded_file"
-              echo "✅ Found downloaded file: $(basename "$fname")"
-          else
-              echo "❌ Could not find downloaded file in $dst"
-              echo "📁 Directory contents:"
-              ls -la "$dst" 2>/dev/null || echo "   (empty or inaccessible)"
+              echo "   • The file might have been partially downloaded - run the script again"
               return 1
           fi
           ;;

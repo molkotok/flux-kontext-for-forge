@@ -22,6 +22,8 @@ EOF
     exit 0
 fi
 
+
+
 # Function to detect OS
 detect_os() {
     case "$(uname -s)" in
@@ -344,91 +346,96 @@ download() {
     
     echo "✅ Directory created successfully: $dst"
     
-    # Handle filename differently for Google Drive
-    local fname
+    # Get the expected final filename for any URL type
+    local final_filename
     if [[ "$url" == gdrive://* ]]; then
-        # For Google Drive, we'll let gdown determine the filename
-        # We'll use a temporary approach and rename later
-        fname="$dst/gdrive_temp_$(basename "${url#gdrive://}")"
+        # For Google Drive, try to get original filename
+        local drive_id="${url#gdrive://}"
+        local drive_url="https://drive.google.com/uc?id=${drive_id}&export=download"
+        local content_disposition=$(curl -s -I -L "$drive_url" 2>/dev/null | grep -i "content-disposition" | head -1)
+        
+        if [[ "$content_disposition" == *"filename="* ]]; then
+            final_filename=$(echo "$content_disposition" | sed 's/.*filename="\([^"]*\)".*/\1/' | tr -d '\r\n')
+        fi
+        
+        # If couldn't get original filename, use generic name
+        if [ -z "$final_filename" ]; then
+            final_filename="google-drive-${drive_id}.safetensors"
+        fi
     else
-        fname="$dst/$(basename "$url")"
+        # For other URLs, use the basename
+        final_filename="$(basename "$url")"
     fi
-
-    # Convert path for curl if needed
-    local curl_path=$(convert_path_for_curl "$fname")
     
-    echo "📄 Target file: $fname"
-    echo "📄 Curl path: $curl_path"
+    # Create temporary filename (final name + .part)
+    local temp_filename="${final_filename}.part"
+    local temp_file="$dst/$temp_filename"
+    local final_file="$dst/$final_filename"
+    
+    # Set fname to final file path for later use
+    fname="$final_file"
+    
+    # Convert path for curl if needed
+    local curl_path=$(convert_path_for_curl "$temp_file")
+    
+    echo "📄 Final file: $final_file"
+    echo "📄 Temp file: $temp_file"
 
-    # For Google Drive, check if any file exists in the directory AND handle .part files
-    if [[ "$url" == gdrive://* ]]; then
-        echo "🔍 Checking for existing files in Lora directory..."
-        
-        # First, check for .part files and try to recover them
-        local part_files=$(find "$dst" -maxdepth 1 -name "*.part" -type f 2>/dev/null)
-        if [ -n "$part_files" ]; then
-            echo "📁 Found .part files from previous download:"
-            local part_file
-            while IFS= read -r part_file; do
-                if [ -f "$part_file" ]; then
-                    local part_size=$(stat -c%s "$part_file" 2>/dev/null || stat -f%z "$part_file" 2>/dev/null || echo "0")
-                    echo "   • $(basename "$part_file"): $(format_file_size "$part_size")"
-                    
-                    # If file is reasonably large (>50MB), it might be complete
-                    if [ "$part_size" -gt 52428800 ]; then
-                        echo "🔄 Trying to recover complete .part file..."
-                        
-                        # Try to rename .part file to proper extension
-                        local recovered_name="${part_file%.part}.safetensors"
-                        
-                        if mv "$part_file" "$recovered_name" 2>/dev/null; then
-                            echo "✅ Recovered file as: $(basename "$recovered_name")"
-                            fname="$recovered_name"
-                            # Skip download since we recovered the file
-                            echo "🔍 Verifying recovered file integrity..."
-                            if verify_file_integrity "$fname" "$url"; then
-                                echo "✅ $(basename "$fname") recovered and verified successfully"
-                                return 0
-                            else
-                                echo "⚠️ Recovered file seems corrupted, will re-download"
-                                rm -f "$recovered_name" 2>/dev/null
-                            fi
-                        else
-                            echo "⚠️ Could not rename .part file, will clean up and re-download"
-                            rm -f "$part_file" 2>/dev/null
-                        fi
-                    else
-                        echo "⚠️ .part file too small, likely incomplete - removing"
-                        rm -f "$part_file" 2>/dev/null
-                    fi
-                fi
-            done <<< "$part_files"
-        fi
-        
-        # Then check for complete files
-        local existing_files=$(find "$dst" -maxdepth 1 -type f -name "*.safetensors" -o -name "*.pt" -o -name "*.ckpt" 2>/dev/null)
-        if [ -n "$existing_files" ]; then
-            echo "📁 Found existing complete files:"
-            while IFS= read -r file; do
-                echo "   • $(basename "$file")"
-                if verify_file_integrity "$file" "$url"; then
-                    echo "✔ $(basename "$file") already OK"
-                    return 0
-                fi
-            done <<< "$existing_files"
-            echo "⚠️ Found files but they seem corrupted, will re-download"
-        fi
-    else
-        # If file is already correct, do nothing
-        if [ -f "$fname" ]; then
-            if verify_file_integrity "$fname" "$url"; then
-            echo "✔ $(basename "$fname") already OK"
+    # Universal file checking logic for all URL types
+    echo "🔍 Checking for existing files..."
+    
+    # First, check if final file already exists
+    if [ -f "$final_file" ]; then
+        echo "✅ Found existing file: $(basename "$final_file")"
+        if verify_file_integrity "$final_file" "$url"; then
+            echo "✔ $(basename "$final_file") already OK"
             return 0
-            else
-                echo "⚠️ $(basename "$fname") seems corrupted, will re-download"
-            fi
+        else
+            echo "⚠️ $(basename "$final_file") seems corrupted, will re-download"
+            rm -f "$final_file" 2>/dev/null
         fi
     fi
+    
+    # Then check for .part file to recover
+    if [ -f "$temp_file" ]; then
+        local part_size=$(stat -c%s "$temp_file" 2>/dev/null || stat -f%z "$temp_file" 2>/dev/null || echo "0")
+        echo "📁 Found existing .part file: $(basename "$temp_file") ($(format_file_size "$part_size"))"
+        
+        # If file is reasonably large (>50MB), it might be complete
+        if [ "$part_size" -gt 52428800 ]; then
+            echo "🔄 Trying to recover complete .part file..."
+            
+            # Try to rename .part file to final name
+            if mv "$temp_file" "$final_file" 2>/dev/null; then
+                echo "✅ Recovered file as: $(basename "$final_file")"
+                # Verify the recovered file
+                echo "🔍 Verifying recovered file integrity..."
+                if verify_file_integrity "$final_file" "$url"; then
+                    echo "✅ $(basename "$final_file") recovered and verified successfully"
+                    return 0
+                else
+                    echo "⚠️ Recovered file seems corrupted, will re-download"
+                    rm -f "$final_file" 2>/dev/null
+                fi
+            else
+                echo "⚠️ Could not rename .part file, will clean up and re-download"
+                rm -f "$temp_file" 2>/dev/null
+            fi
+                 else
+             echo "⚠️ .part file exists but is small ($(format_file_size "$part_size"))"
+             echo "   Will resume download from where it left off"
+         fi
+     fi
+     
+     # Clean up any old .part files that don't match our naming scheme
+     local old_part_files=$(find "$dst" -maxdepth 1 -name "*.part" -type f ! -name "$(basename "$temp_file")" 2>/dev/null)
+     if [ -n "$old_part_files" ]; then
+         echo "🧹 Cleaning up old .part files..."
+         while IFS= read -r old_part; do
+             echo "   • Removing: $(basename "$old_part")"
+             rm -f "$old_part" 2>/dev/null || true
+         done <<< "$old_part_files"
+     fi
 
     # Get real file size from server (skip for Google Drive)
     local remote_size=""
@@ -445,96 +452,54 @@ download() {
         echo "📊 Remote file size: unknown for Google Drive (will verify after download)"
     fi
 
-    echo "↓ Downloading from Google Drive ..."
+    echo "↓ Downloading $(basename "$final_filename") ..."
+    local download_success=false
+    
     case "$url" in
       gdrive://*)
-          # Clean up any remaining .part files (they should have been handled earlier)
-          find "$dst" -name "*.part" -type f -delete 2>/dev/null || true
+          local drive_id="${url#gdrive://}"
           
-          local dst_dir_path=$(convert_path_for_curl "$dst")
-          local gdown_success=false
-          local gdown_exit_code=0
+          # Check if we already have a partial download
+          if [ -f "$temp_file" ]; then
+              local temp_size=$(stat -c%s "$temp_file" 2>/dev/null || stat -f%z "$temp_file" 2>/dev/null || echo "0")
+              echo "🔄 Resuming download from $(format_file_size "$temp_size")"
+          fi
           
-          # Method 1: Try gdown directly with --fuzzy for original filename
+          # Method 1: Try gdown directly
           if command -v gdown &>/dev/null; then
-              gdown --fuzzy -c --no-cookies "${url#gdrive://}" -O "$dst_dir_path/"
-              gdown_exit_code=$?
-              if [ $gdown_exit_code -eq 0 ]; then
-                  gdown_success=true
+              if gdown -c --no-cookies "https://drive.google.com/uc?id=${drive_id}" -O "$curl_path"; then
+                  download_success=true
               fi
           fi
           
-          # Method 2: Try python -m gdown with --fuzzy
-          if [ "$gdown_success" = false ]; then
-              python -m gdown --fuzzy -c --no-cookies "${url#gdrive://}" -O "$dst_dir_path/"
-              gdown_exit_code=$?
-              if [ $gdown_exit_code -eq 0 ]; then
-                  gdown_success=true
+          # Method 2: Try python -m gdown
+          if [ "$download_success" = false ]; then
+              if python -m gdown -c --no-cookies "https://drive.google.com/uc?id=${drive_id}" -O "$curl_path"; then
+                  download_success=true
               fi
           fi
           
-          # Method 3: Try python3 -m gdown with --fuzzy
-          if [ "$gdown_success" = false ]; then
-              python3 -m gdown --fuzzy -c --no-cookies "${url#gdrive://}" -O "$dst_dir_path/" 2>/dev/null
-              gdown_exit_code=$?
-              if [ $gdown_exit_code -eq 0 ]; then
-                  gdown_success=true
+          # Method 3: Try python3 -m gdown
+          if [ "$download_success" = false ]; then
+              if python3 -m gdown -c --no-cookies "https://drive.google.com/uc?id=${drive_id}" -O "$curl_path" 2>/dev/null; then
+                  download_success=true
               fi
           fi
           
-          # Find the downloaded file (gdown saves with original name)
-          echo "🔍 Looking for downloaded file..."
-          local downloaded_file=""
-          
-          # Method 1: Look for .safetensors files first (exclude desktop.ini and system files)
-          if [ -d "$dst" ]; then
-              downloaded_file=$(find "$dst" -maxdepth 1 -name "*.safetensors" -type f ! -name "desktop.ini" | head -1)
-          fi
-          
-          # Method 2: Look for other common extensions
-          if [ -z "$downloaded_file" ] && [ -d "$dst" ]; then
-              downloaded_file=$(find "$dst" -maxdepth 1 \( -name "*.pt" -o -name "*.ckpt" -o -name "*.pth" \) -type f ! -name "desktop.ini" | head -1)
-          fi
-          
-          # Method 3: Find any file (excluding .part files and system files)
-          if [ -z "$downloaded_file" ] && [ -d "$dst" ]; then
-              downloaded_file=$(find "$dst" -maxdepth 1 -type f ! -name "*.part" ! -name "desktop.ini" ! -name "*.lnk" ! -name "Thumbs.db" -exec ls -t {} + 2>/dev/null | head -1)
-          fi
-          
-          # Check if file was found
-          if [ -n "$downloaded_file" ] && [ -f "$downloaded_file" ]; then
-              fname="$downloaded_file"
-              echo "✅ Found downloaded file: $(basename "$fname")"
-              # Even if gdown reported an error, if we have the file, consider it successful
-              gdown_success=true
-          else
-              echo "❌ Could not find downloaded file in $dst"
-              echo "📁 Directory contents:"
-              ls -la "$dst" 2>/dev/null || echo "   (empty or inaccessible)"
-              
-              # Check if there are any .part files that might indicate partial download
-              local part_files=$(find "$dst" -name "*.part" -type f 2>/dev/null)
-              if [ -n "$part_files" ]; then
-                  echo "⚠️ Found incomplete download files:"
-                  echo "$part_files"
-                  echo "💡 Try running the script again to resume the download"
-              fi
-          fi
-          
-          if [ "$gdown_success" = false ]; then
+          if [ "$download_success" = false ]; then
               echo "❌ Failed to download from Google Drive: $url"
               echo "💡 Troubleshooting:"
               echo "   • Make sure the file has public access or link sharing enabled"
               echo "   • Try running: python -m pip install --user --upgrade gdown"
               echo "   • Check if the Google Drive link is correct"
-              echo "   • The file might have been partially downloaded - run the script again"
               return 1
           fi
           ;;
       http*|https*)
-          echo "↓ Downloading $(basename "$fname") ..."
           # curl with timeout and better error handling
-          if ! curl -L --connect-timeout 30 --max-time 3600 --retry 3 --retry-delay 5 --continue-at - -o "$curl_path" "$url"; then
+          if curl -L --connect-timeout 30 --max-time 3600 --retry 3 --retry-delay 5 --continue-at - -o "$curl_path" "$url"; then
+              download_success=true
+          else
               echo "❌ Failed to download: $url"
               return 1
           fi
@@ -544,6 +509,23 @@ download() {
           return 1
           ;;
     esac
+    
+    # After successful download, rename temp file to final name
+    if [ "$download_success" = true ] && [ -f "$temp_file" ]; then
+        echo "🔄 Finalizing download..."
+        if mv "$temp_file" "$final_file" 2>/dev/null; then
+            echo "✅ Successfully saved as: $(basename "$final_file")"
+            fname="$final_file"
+        else
+            echo "⚠️ Could not rename file, but download succeeded"
+            fname="$temp_file"
+        fi
+    elif [ "$download_success" = true ]; then
+        echo "⚠️ Download reported success but temporary file not found"
+        echo "📁 Directory contents:"
+        ls -la "$dst" 2>/dev/null || echo "   (empty or inaccessible)"
+        return 1
+    fi
 
     # Verify the final file exists
     if [ ! -f "$fname" ]; then

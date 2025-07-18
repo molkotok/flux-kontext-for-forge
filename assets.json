@@ -26,7 +26,8 @@
   {
     "url": "gdrive://1Vfr7GEt-3vlGKoa29dQKPxY6ahGk_bGc",
     "target": "$FORGE_HOME/models/Lora/",
-    "size": 0.1
+    "filename": "flux-lora-000006.safetensors",
+    "size": 0.292
   },
   {
     "git": "https://github.com/DenOfEquity/forge2_flux_kontext.git",

@@ -22,8 +22,6 @@ EOF
     exit 0
 fi
 
-
-
 # Function to detect OS
 detect_os() {
     case "$(uname -s)" in

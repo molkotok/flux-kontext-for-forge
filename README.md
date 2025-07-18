@@ -75,16 +75,78 @@ File verification now uses size checks only and completes in under 1 second per 
 
 ## ➕ Adding custom models
 
-1. **Edit `assets.json`:**
+You can easily add your own models to the installer. Supported sources:
+- **Hugging Face** links
+- **Google Drive** links 
+- **Direct HTTP/HTTPS** links
+- **Git repositories**
+
+### 🎨 Adding Lora models
+
+1. **Open `assets.json`** and add a new entry:
+
+   **For Hugging Face:**
    ```json
    {
-     "url": "https://example.com/my-model.safetensors",
+     "url": "https://huggingface.co/user/model/resolve/main/lora.safetensors",
      "target": "$FORGE_HOME/models/Lora/",
-     "size": 1.5
+     "size": 0.5
    }
    ```
 
-2. **Run installer again** - only new files will be downloaded
+   **For Google Drive:**
+   ```json
+   {
+     "url": "gdrive://1Vfr7GEt-3vlGKoa29dQKPxY6ahGk_bGc",
+     "target": "$FORGE_HOME/models/Lora/",
+     "size": 0.2
+   }
+   ```
+
+   **For direct links:**
+   ```json
+   {
+     "url": "https://example.com/my-lora.safetensors",
+     "target": "$FORGE_HOME/models/Lora/",
+     "size": 0.3
+   }
+   ```
+
+### 🔗 How to get the correct Google Drive link
+
+1. **Your link looks like this:**
+   ```
+   https://drive.google.com/file/d/1Vfr7GEt-3vlGKoa29dQKPxY6ahGk_bGc/view?usp=drive_link
+   ```
+
+2. **Extract the file ID** (part between `/d/` and `/view`):
+   ```
+   1Vfr7GEt-3vlGKoa29dQKPxY6ahGk_bGc
+   ```
+
+3. **Use the format `gdrive://ID`:**
+   ```
+   gdrive://1Vfr7GEt-3vlGKoa29dQKPxY6ahGk_bGc
+   ```
+
+### 📁 Model types and folders
+
+| Model Type | Folder | Example |
+|------------|--------|---------|
+| **Lora** | `$FORGE_HOME/models/Lora/` | Styles, characters |
+| **Checkpoint** | `$FORGE_HOME/models/Stable-diffusion/` | Base models |
+| **VAE** | `$FORGE_HOME/models/VAE/` | Autoencoders |
+| **Embedding** | `$FORGE_HOME/embeddings/` | Text embeddings |
+| **ControlNet** | `$FORGE_HOME/models/ControlNet/` | ControlNet models |
+
+### 🔧 Running after adding
+
+**Run the installer again** - only new files will be downloaded:
+```bash
+bash bootstrap.sh
+```
+
+**Important:** Make sure files on Google Drive have public access or link sharing enabled!
 
 ---
 

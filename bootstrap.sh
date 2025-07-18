@@ -323,7 +323,7 @@ verify_file_integrity() {
 
 
 download() {
-    local url="$1" dst="$2"
+    local url="$1" dst="$2" entry="$3"
     
     # Remove trailing slash from path for normalization
     dst="${dst%/}"
@@ -346,25 +346,24 @@ download() {
     
     echo "✅ Directory created successfully: $dst"
     
-    # Get the expected final filename for any URL type
-    local final_filename
-    if [[ "$url" == gdrive://* ]]; then
-        # For Google Drive, try to get original filename
+    # Get the expected final filename - check if specified in JSON first
+    local final_filename=""
+    
+    # Check if filename is specified in the JSON entry
+    local specified_filename=$(echo "$entry" | jq -r '.filename? // empty' 2>/dev/null)
+    
+    if [ -n "$specified_filename" ]; then
+        final_filename="$specified_filename"
+        echo "✅ Using filename from JSON: $final_filename"
+    elif [[ "$url" == gdrive://* ]]; then
+        # For Google Drive without specified filename, use ID-based name
         local drive_id="${url#gdrive://}"
-        local drive_url="https://drive.google.com/uc?id=${drive_id}&export=download"
-        local content_disposition=$(curl -s -I -L "$drive_url" 2>/dev/null | grep -i "content-disposition" | head -1)
-        
-        if [[ "$content_disposition" == *"filename="* ]]; then
-            final_filename=$(echo "$content_disposition" | sed 's/.*filename="\([^"]*\)".*/\1/' | tr -d '\r\n')
-        fi
-        
-        # If couldn't get original filename, use generic name
-        if [ -z "$final_filename" ]; then
-            final_filename="google-drive-${drive_id}.safetensors"
-        fi
+        final_filename="google-drive-${drive_id}.safetensors"
+        echo "⚠️ No filename specified, using generic: $final_filename"
     else
         # For other URLs, use the basename
         final_filename="$(basename "$url")"
+        echo "✅ Using filename from URL: $final_filename"
     fi
     
     # Create temporary filename (final name + .part)
@@ -586,7 +585,7 @@ while IFS= read -r entry; do
     tgt=$(expand_path "$target_raw")
     
   if [ -n "$url" ]; then
-        if ! download "$url" "$tgt"; then
+        if ! download "$url" "$tgt" "$entry"; then
             failed_count=$((failed_count + 1))
         fi
   elif [ -n "$giturl" ]; then

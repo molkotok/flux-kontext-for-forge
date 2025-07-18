@@ -94,12 +94,22 @@ You can easily add your own models to the installer. Supported sources:
    }
    ```
 
-   **For Google Drive:**
+   **For Google Drive (with custom filename):**
    ```json
    {
      "url": "gdrive://1Vfr7GEt-3vlGKoa29dQKPxY6ahGk_bGc",
      "target": "$FORGE_HOME/models/Lora/",
-     "size": 0.2
+     "filename": "flux-lora-000006.safetensors",
+     "size": 0.3
+   }
+   ```
+
+   **For Google Drive (without filename - will use generic name):**
+   ```json
+   {
+     "url": "gdrive://1Vfr7GEt-3vlGKoa29dQKPxY6ahGk_bGc",
+     "target": "$FORGE_HOME/models/Lora/",
+     "size": 0.3
    }
    ```
 
@@ -138,6 +148,16 @@ You can easily add your own models to the installer. Supported sources:
 | **VAE** | `$FORGE_HOME/models/VAE/` | Autoencoders |
 | **Embedding** | `$FORGE_HOME/embeddings/` | Text embeddings |
 | **ControlNet** | `$FORGE_HOME/models/ControlNet/` | ControlNet models |
+
+### 📝 Optional fields
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| **`filename`** | Specify desired filename (optional) | `"flux-lora-000006.safetensors"` |
+| **`size`** | Approximate file size in GB (optional) | `0.3` |
+| **`sha256`** | File checksum for verification (optional) | `"abc123..."` |
+
+**Note:** If `filename` is not specified for Google Drive links, a generic name will be used (e.g., `google-drive-<ID>.safetensors`).
 
 ### 🔧 Running after adding
 

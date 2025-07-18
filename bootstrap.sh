@@ -346,7 +346,15 @@ download() {
     
     echo "✅ Directory created successfully: $dst"
     
-    local fname="$dst/$(basename "$url")"
+    # Handle filename differently for Google Drive
+    local fname
+    if [[ "$url" == gdrive://* ]]; then
+        # For Google Drive, we'll let gdown determine the filename
+        # We'll use a temporary approach and rename later
+        fname="$dst/gdrive_temp_$(basename "${url#gdrive://}")"
+    else
+        fname="$dst/$(basename "$url")"
+    fi
 
     # Convert path for curl if needed
     local curl_path=$(convert_path_for_curl "$fname")
@@ -354,36 +362,111 @@ download() {
     echo "📄 Target file: $fname"
     echo "📄 Curl path: $curl_path"
 
-    # If file is already correct, do nothing
-    if [ -f "$fname" ]; then
-        if verify_file_integrity "$fname" "$url"; then
-        echo "✔ $(basename "$fname") already OK"
-        return 0
-        else
-            echo "⚠️ $(basename "$fname") seems corrupted, will re-download"
+    # For Google Drive, check if any file exists in the directory
+    if [[ "$url" == gdrive://* ]]; then
+        echo "🔍 Checking for existing files in Lora directory..."
+        local existing_files=$(find "$dst" -maxdepth 1 -type f -name "*.safetensors" -o -name "*.pt" -o -name "*.ckpt" 2>/dev/null)
+        if [ -n "$existing_files" ]; then
+            echo "📁 Found existing files:"
+            while IFS= read -r file; do
+                echo "   • $(basename "$file")"
+                if verify_file_integrity "$file" "$url"; then
+                    echo "✔ $(basename "$file") already OK"
+                    return 0
+                fi
+            done <<< "$existing_files"
+            echo "⚠️ Found files but they seem corrupted, will re-download"
+        fi
+    else
+        # If file is already correct, do nothing
+        if [ -f "$fname" ]; then
+            if verify_file_integrity "$fname" "$url"; then
+            echo "✔ $(basename "$fname") already OK"
+            return 0
+            else
+                echo "⚠️ $(basename "$fname") seems corrupted, will re-download"
+            fi
         fi
     fi
 
-    # Get real file size from server
-    echo "🔍 Checking remote file size..."
-    local remote_size=$(get_remote_file_size "$url")
-    if [ -n "$remote_size" ]; then
-        local remote_size_formatted=$(format_file_size "$remote_size")
-        echo "📊 Remote file size: $remote_size_formatted"
+    # Get real file size from server (skip for Google Drive)
+    local remote_size=""
+    if [[ "$url" != gdrive://* ]]; then
+        echo "🔍 Checking remote file size..."
+        remote_size=$(get_remote_file_size "$url")
+        if [ -n "$remote_size" ]; then
+            local remote_size_formatted=$(format_file_size "$remote_size")
+            echo "📊 Remote file size: $remote_size_formatted"
+        else
+            echo "📊 Remote file size: unknown (will verify after download)"
+        fi
     else
-        echo "📊 Remote file size: unknown (will verify after download)"
+        echo "📊 Remote file size: unknown for Google Drive (will verify after download)"
     fi
 
-    echo "↓ Downloading $(basename "$fname") ..."
+    echo "↓ Downloading from Google Drive ..."
     case "$url" in
       gdrive://*)
-          # gdown can resume with -c
-          if ! gdown -c --no-cookies "${url#gdrive://}" -O "$curl_path"; then
+          # Try different ways to run gdown
+          local gdown_success=false
+          local dst_dir_path=$(convert_path_for_curl "$dst")
+          
+          # Method 1: Try gdown directly
+          if command -v gdown &>/dev/null; then
+              if gdown -c --no-cookies "${url#gdrive://}" -O "$dst_dir_path/"; then
+                  gdown_success=true
+              fi
+          fi
+          
+          # Method 2: Try python -m gdown
+          if [ "$gdown_success" = false ]; then
+              if python -m gdown -c --no-cookies "${url#gdrive://}" -O "$dst_dir_path/"; then
+                  gdown_success=true
+              fi
+          fi
+          
+          # Method 3: Try python3 -m gdown
+          if [ "$gdown_success" = false ]; then
+              if python3 -m gdown -c --no-cookies "${url#gdrive://}" -O "$dst_dir_path/" 2>/dev/null; then
+                  gdown_success=true
+              fi
+          fi
+          
+          if [ "$gdown_success" = false ]; then
               echo "❌ Failed to download from Google Drive: $url"
+              echo "💡 Troubleshooting:"
+              echo "   • Make sure the file has public access or link sharing enabled"
+              echo "   • Try running: python -m pip install --user --upgrade gdown"
+              echo "   • Check if the Google Drive link is correct"
+              return 1
+          fi
+          
+          # Find the downloaded file (gdown saves with original name)
+          echo "🔍 Looking for downloaded file..."
+          local downloaded_file=""
+          
+          # Method 1: Find the newest file in directory
+          if [ -d "$dst" ]; then
+              downloaded_file=$(find "$dst" -maxdepth 1 -type f -exec ls -t {} + 2>/dev/null | head -1)
+          fi
+          
+          # Method 2: If still not found, try ls approach
+          if [ -z "$downloaded_file" ] && [ -d "$dst" ]; then
+              downloaded_file=$(ls -t "$dst"/*.* 2>/dev/null | head -1)
+          fi
+          
+          if [ -n "$downloaded_file" ] && [ -f "$downloaded_file" ]; then
+              fname="$downloaded_file"
+              echo "✅ Found downloaded file: $(basename "$fname")"
+          else
+              echo "❌ Could not find downloaded file in $dst"
+              echo "📁 Directory contents:"
+              ls -la "$dst" 2>/dev/null || echo "   (empty or inaccessible)"
               return 1
           fi
           ;;
       http*|https*)
+          echo "↓ Downloading $(basename "$fname") ..."
           # curl with timeout and better error handling
           if ! curl -L --connect-timeout 30 --max-time 3600 --retry 3 --retry-delay 5 --continue-at - -o "$curl_path" "$url"; then
               echo "❌ Failed to download: $url"
@@ -395,6 +478,12 @@ download() {
           return 1
           ;;
     esac
+
+    # Verify the final file exists
+    if [ ! -f "$fname" ]; then
+        echo "❌ File does not exist after download: $fname"
+        return 1
+    fi
 
     # Check size after download
     local downloaded_size=$(stat -c%s "$fname" 2>/dev/null || stat -f%z "$fname" 2>/dev/null || echo "0")

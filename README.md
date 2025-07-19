@@ -4,10 +4,38 @@
 
 ## 📋 What this installs
 
+### 🎨 Models
 - **Flux checkpoint** (11.0GB) → `models/Stable-diffusion/`
 - **VAE** (320MB) → `models/VAE/`
 - **Text encoders** (4.5GB + 235MB) → `models/text_encoder/` + `models/clip/`
-- **Extension** → `extensions/forge2_flux_kontext/`
+- **Lora model** (292MB) → `models/Lora/`
+
+### 🔧 Extensions
+- **[forge2_flux_kontext](https://github.com/DenOfEquity/forge2_flux_kontext)** → `extensions/forge2_flux_kontext/`
+  - Official Flux Kontext extension for Forge
+  - Provides UI integration and model support
+
+**Plus 19+ additional extensions:**
+- **[adetailer](https://github.com/Bing-su/adetailer)** - Automatic masking and inpainting
+- **[sd-webui-reactor](https://github.com/Gourieff/sd-webui-reactor)** - Fast face replacement (face swap)
+- **[sd-webui-inpaint-anything](https://github.com/continue-revolution/sd-webui-inpaint-anything)** - Advanced inpainting with SAM
+- **[sd-webui-prompt-all-in-one](https://github.com/Physton/sd-webui-prompt-all-in-one)** - Enhanced prompt management
+- **[sd-webui-aspect-ratio-helper](https://github.com/thomasasfk/sd-webui-aspect-ratio-helper)** - Aspect ratio utilities
+- **[sd-webui-regional-prompter](https://github.com/hako-mikan/sd-webui-regional-prompter)** - Regional prompting
+- **[sd-webui-stablesr](https://github.com/pkuliyi2015/multidiffusion-upscaler-for-automatic1111)** - StableSR upscaling
+- **[stable-diffusion-webui-rembg](https://github.com/AUTOMATIC1111/stable-diffusion-webui-rembg)** - Background removal
+- **[sd-webui-inpaint-background](https://github.com/continue-revolution/sd-webui-inpaint-background)** - Background inpainting
+- **[sd-webui-photopea-embed](https://github.com/Physton/sd-webui-photopea-embed)** - Photopea integration
+- **[stable-diffusion-webui-promptgen](https://github.com/AUTOMATIC1111/stable-diffusion-webui-promptgen)** - Prompt generation
+- **[sd-dynamic-prompts](https://github.com/adieyal/sd-dynamic-prompts)** - Dynamic prompt templates
+- **[sd-canvas-editor](https://github.com/continue-revolution/sd-webui-canvas-editor)** - Canvas editing tools
+- **[canvas-zoom](https://github.com/Physton/sd-webui-canvas-zoom)** - Canvas zoom functionality
+- **[Ar_xhox](https://github.com/Ar-xhox/sd-webui-ar)** - Additional utilities
+- **[a1111-sd-webui-tagcomplete](https://github.com/DominikDoom/a1111-sd-webui-tagcomplete)** - Tag autocompletion
+- **[ultimate-upscale-for-automatic1111](https://github.com/Coyote-A/ultimate-upscale-for-automatic1111)** - Advanced upscaling
+- **[StyleSelectorXL](https://github.com/ahgsqls/StyleSelectorXL)** - Style selection for SDXL
+
+*All extensions are pre-installed and ready to use!*
 
 **Total download:** ~16GB • **Time:** 15-30 minutes
 
@@ -166,7 +194,10 @@ You can easily add your own models to the installer. Supported sources:
 bash bootstrap.sh
 ```
 
-**Important:** Make sure files on Google Drive have public access or link sharing enabled!
+**Important:** 
+- Make sure files on Google Drive have public access or link sharing enabled!
+- The installer **never updates existing extensions** to preserve compatibility
+- If you want to update an extension manually: `cd extension_folder && git pull`
 
 ---
 

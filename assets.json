@@ -23,6 +23,12 @@
     "sha256": "7d330da4816157540d6bb7838bf63a0f02f573fc48ca4d8de34bb0cbfd514f09",
     "size": 4.5
   },
+   {
+    "url": "gdrive://1Vfr7GEt-3vlGKoa29dQKPxY6ahGk_bGc",
+    "target": "$FORGE_HOME/models/Lora/",
+    "filename": "flux-lora-000006.safetensors",
+    "size": 0.292
+  },
   {
     "git": "https://github.com/DenOfEquity/forge2_flux_kontext.git",
     "target": "$FORGE_HOME/extensions/forge2_flux_kontext"

@@ -558,17 +558,17 @@ clone_or_update() {
     local git_path=$(convert_path_for_curl "$tgt")
     
     if [ -d "$tgt/.git" ]; then
-        echo "🔄 Updating repository: $(basename "$tgt")"
-        if ! git -C "$tgt" pull --ff-only; then
-            echo "❌ Failed to update repository: $tgt"
-            return 1
-        fi
+        echo "✅ Repository already exists: $(basename "$tgt")"
+        echo "   Skipping update to preserve compatibility"
+        echo "   💡 To update manually: cd '$tgt' && git pull"
+        return 0
     else
         echo "📥 Cloning repository: $(basename "$tgt")"
         if ! git clone --depth 1 "$giturl" "$git_path"; then
             echo "❌ Failed to clone repository: $giturl"
             return 1
         fi
+        echo "✅ Successfully cloned: $(basename "$tgt")"
     fi
 }
 
@@ -612,6 +612,9 @@ if [ $failed_count -eq 0 ]; then
     echo "   • Start Forge (webui.sh or webui-user.bat)"
     echo "   • Flux Kontext models are ready to use"
     echo "   • All files downloaded and verified"
+    echo ""
+    echo "⚠️ Note: Existing extensions were not updated to preserve compatibility"
+    echo "   To update manually: cd extension_folder && git pull"
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     exit 0

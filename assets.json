@@ -32,5 +32,45 @@
   {
     "git": "https://github.com/DenOfEquity/forge2_flux_kontext.git",
     "target": "$FORGE_HOME/extensions/forge2_flux_kontext"
+  },
+  {
+    "git": "https://github.com/Gourieff/sd-webui-reactor-sfw.git",
+    "target": "$FORGE_HOME/extensions/sd-webui-reactor-sfw"
+  },
+  {
+    "git": "https://github.com/thomasasfk/sd-webui-aspect-ratio-helper.git",
+    "target": "$FORGE_HOME/extensions/sd-webui-aspect-ratio-helper"
+  },
+  {
+    "git": "https://github.com/Physton/sd-webui-prompt-all-in-one.git",
+    "target": "$FORGE_HOME/extensions/sd-webui-prompt-all-in-one"
+  },
+  {
+    "git": "https://github.com/Bing-su/adetailer.git",
+    "target": "$FORGE_HOME/extensions/adetailer"
+  },
+  {
+    "git": "https://github.com/xhoxye/sd-webui-ar_xhox.git",
+    "target": "$FORGE_HOME/extensions/Ar_xhox"
+  },
+  {
+    "git": "https://github.com/Coyote-A/ultimate-upscale-for-automatic1111.git",
+    "target": "$FORGE_HOME/extensions/ultimate-upscale-for-automatic1111"
+  },
+  {
+    "git": "https://github.com/ahgsql/StyleSelectorXL.git",
+    "target": "$FORGE_HOME/extensions/StyleSelectorXL"
+  },
+  {
+    "git": "https://github.com/AUTOMATIC1111/stable-diffusion-webui-rembg.git",
+    "target": "$FORGE_HOME/extensions/stable-diffusion-webui-rembg"
+  },
+  {
+    "git": "https://github.com/pkuliyi2015/sd-webui-stablesr.git",
+    "target": "$FORGE_HOME/extensions/sd-webui-stablesr"
+  },
+  {
+    "git": "https://github.com/PladsElsker/sd-webui-inpaint-background.git",
+    "target": "$FORGE_HOME/extensions/sd-webui-inpaint-background"
   }
 ]

@@ -578,17 +578,67 @@ install_python_requirements() {
             total_count=$((total_count + 1))
             echo "   📦 Installing: $package_spec"
             
-            # Try different pip commands
-            if python -m pip install --user "$package_spec" 2>/dev/null; then
-                echo "   ✅ Successfully installed: $package_spec"
-                success_count=$((success_count + 1))
-            elif python3 -m pip install --user "$package_spec" 2>/dev/null; then
-                echo "   ✅ Successfully installed: $package_spec"
-                success_count=$((success_count + 1))
-            else
-                echo "   ❌ Failed to install: $package_spec"
-                echo "   💡 You may need to install this manually: pip install $package_spec"
-            fi
+            # Special handling for problematic packages
+            case "$package_spec" in
+                "dlib=="*)
+                    # Try dlib installation methods for Windows
+                    local version="${package_spec#dlib==}"
+                    echo "   🔧 Installing dlib $version for Python 3.12..."
+                    
+                    # Method 1: Try official dlib (works for 20.0.0+ on Python 3.12)
+                    if python -m pip install --user "dlib==$version" 2>/dev/null; then
+                        echo "   ✅ Successfully installed: dlib==$version"
+                        success_count=$((success_count + 1))
+                    # Method 2: Try dlib-binary as fallback
+                    elif python -m pip install --user "dlib-binary==$version" 2>/dev/null; then
+                        echo "   ✅ Successfully installed: dlib-binary==$version"
+                        success_count=$((success_count + 1))
+                    # Method 3: Try cmake-dlib
+                    elif python -m pip install --user "cmake-dlib==$version" 2>/dev/null; then
+                        echo "   ✅ Successfully installed: cmake-dlib==$version"
+                        success_count=$((success_count + 1))
+                    # Method 4: Try latest dlib
+                    elif python -m pip install --user "dlib" 2>/dev/null; then
+                        echo "   ✅ Successfully installed: dlib (latest)"
+                        success_count=$((success_count + 1))
+                    else
+                        echo "   ❌ Failed to install: $package_spec"
+                        echo "   💡 Manual installation options:"
+                        echo "      • pip install dlib==$version (official wheel for Python 3.12)"
+                        echo "      • pip install dlib-binary==$version (unofficial wheel)"
+                        echo "      • conda install -c conda-forge dlib"
+                        echo "      • Install Visual Studio Build Tools + CMake for source build"
+                        echo "   📝 Note: sd-webui-old-photo-restoration may work without dlib"
+                    fi
+                    ;;
+                "insightface=="*)
+                    # Try insightface with different methods
+                    local version="${package_spec#insightface==}"
+                    if python -m pip install --user "insightface==$version" 2>/dev/null; then
+                        echo "   ✅ Successfully installed: $package_spec"
+                        success_count=$((success_count + 1))
+                    elif python -m pip install --user "insightface" 2>/dev/null; then
+                        echo "   ✅ Successfully installed: insightface (latest)"
+                        success_count=$((success_count + 1))
+                    else
+                        echo "   ❌ Failed to install: $package_spec"
+                        echo "   💡 Try installing manually: pip install insightface"
+                    fi
+                    ;;
+                *)
+                    # Standard installation
+                    if python -m pip install --user "$package_spec" 2>/dev/null; then
+                        echo "   ✅ Successfully installed: $package_spec"
+                        success_count=$((success_count + 1))
+                    elif python3 -m pip install --user "$package_spec" 2>/dev/null; then
+                        echo "   ✅ Successfully installed: $package_spec"
+                        success_count=$((success_count + 1))
+                    else
+                        echo "   ❌ Failed to install: $package_spec"
+                        echo "   💡 You may need to install this manually: pip install $package_spec"
+                    fi
+                    ;;
+            esac
         fi
     done <<< "$packages"
     

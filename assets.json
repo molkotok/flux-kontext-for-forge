@@ -30,47 +30,129 @@
     "size": 0.292
   },
   {
+    "url": "gdrive://1Vfr7GEt-3vlGKoa29dQKPxY6ahGk_bGc",
+    "target": "$FORGE_HOME/models/Lora/",
+    "filename": "flux-lora-000006.safetensors",
+    "size": 0.292
+  },
+  {
     "git": "https://github.com/DenOfEquity/forge2_flux_kontext.git",
-    "target": "$FORGE_HOME/extensions/forge2_flux_kontext"
+    "target": "$FORGE_HOME/extensions/forge2_flux_kontext",
+    "python_requirements": {
+      "ultralytics": "8.2.82",
+      "onnxruntime-gpu": "1.19.0",
+      "sdwi2iextender": "0.6.3"
+    }
   },
   {
-    "git": "https://github.com/Gourieff/sd-webui-reactor-sfw.git",
-    "target": "$FORGE_HOME/extensions/sd-webui-reactor-sfw"
+    "name": "--sd-webui-ar-plusplus",
+    "git": "https://github.com/altoiddealer/--sd-webui-ar-plusplus.git",
+    "commit": "8b900cd2748f95bce455db62ba0cb08093a3ca59",
+    "target": "$FORGE_HOME/extensions/sd-webui-ar-plusplus"
   },
   {
+    "name": "a1111-sd-webui-tagcomplete",
+    "git": "https://github.com/DominikDoom/a1111-sd-webui-tagcomplete.git",
+    "commit": "49ec047af8ba73889f65a65585ef16b4a26b416b",
+    "target": "$FORGE_HOME/extensions/a1111-sd-webui-tagcomplete"
+  },
+  {
+    "name": "adetailer",
+    "git": "https://github.com/Bing-su/adetailer.git",
+    "commit": "25e7509fe018de8aa063a5f1902598f5eda0c06c",
+    "target": "$FORGE_HOME/extensions/adetailer",
+    "python_requirements": {
+      "ultralytics": "8.2.82"
+    }
+  },
+  {
+    "name": "clip-interrogator-ext",
+    "git": "https://github.com/pharmapsychotic/clip-interrogator-ext.git",
+    "commit": "0f1a4591f82b93859a1b854afb79494f39384662",
+    "target": "$FORGE_HOME/extensions/clip-interrogator-ext"
+  },
+  {
+    "name": "Config-Presets",
+    "git": "https://github.com/Zyin055/Config-Presets.git",
+    "commit": "02a834a33c435271ac9255847953a69de8a74a6b",
+    "target": "$FORGE_HOME/extensions/Config-Presets"
+  },
+  {
+    "name": "sd-dynamic-prompts",
+    "git": "https://github.com/adieyal/sd-dynamic-prompts.git",
+    "commit": "de056ff8d80e4ad120e13a90cf200f3383f427c6",
+    "target": "$FORGE_HOME/extensions/sd-dynamic-prompts"
+  },
+  {
+    "name": "sd-image-editor",
+    "git": "https://github.com/sontungdo/sd-image-editor.git",
+    "commit": "11fc9c4e22a5394382bbb3b17a0dd1228b93230e",
+    "target": "$FORGE_HOME/extensions/sd-image-editor"
+  },
+  {
+    "name": "sd-webui-aspect-ratio-helper",
     "git": "https://github.com/thomasasfk/sd-webui-aspect-ratio-helper.git",
+    "commit": "99fcf9b0a4e3f8c8cac07b12d17b66f12297b828",
     "target": "$FORGE_HOME/extensions/sd-webui-aspect-ratio-helper"
   },
   {
-    "git": "https://github.com/Physton/sd-webui-prompt-all-in-one.git",
+    "name": "sd-webui-old-photo-restoration",
+    "git": "https://github.com/Haoming02/sd-webui-old-photo-restoration.git",
+    "commit": "45cd9fb51358d2adba7c4a253eaeb01245c97c8f",
+    "target": "$FORGE_HOME/extensions/sd-webui-old-photo-restoration"
+  },
+  {
+    "name": "sd-webui-photopea-embed",
+    "git": "https://github.com/yankooliveira/sd-webui-photopea-embed",
+    "commit": "99ea83f925f187a959b177318b16f840a3cdc11d",
+    "target": "$FORGE_HOME/extensions/sd-webui-photopea-embed"
+  },
+  {
+    "name": "sd-webui-prompt-all-in-one",
+    "git": "https://github.com/Physton/sd-webui-prompt-all-in-one",
+    "commit": "d69645e6a6701c5117e0a874d1ef80d5cb5d55cc", 
     "target": "$FORGE_HOME/extensions/sd-webui-prompt-all-in-one"
   },
   {
-    "git": "https://github.com/Bing-su/adetailer.git",
-    "target": "$FORGE_HOME/extensions/adetailer"
+    "name": "sd-webui-reactor",
+    "git": "https://github.com/Gourieff/sd-webui-reactor.git",
+    "commit": "4493fd7133ba85386cd332e8e61c389d122b7d7e",
+    "target": "$FORGE_HOME/extensions/sd-webui-reactor"
   },
   {
-    "git": "https://github.com/xhoxye/sd-webui-ar_xhox.git",
-    "target": "$FORGE_HOME/extensions/Ar_xhox"
+    "name": "sd-webui-toggle-dark-light",
+    "git": "https://github.com/light-and-ray/sd-webui-toggle-dark-light.git",
+    "commit": "34cd9a5d1a48eab31d6f2451635edc892d3b3000",
+    "target": "$FORGE_HOME/extensions/sd-webui-toggle-dark-light"
   },
   {
-    "git": "https://github.com/Coyote-A/ultimate-upscale-for-automatic1111.git",
-    "target": "$FORGE_HOME/extensions/ultimate-upscale-for-automatic1111"
-  },
-  {
-    "git": "https://github.com/ahgsql/StyleSelectorXL.git",
-    "target": "$FORGE_HOME/extensions/StyleSelectorXL"
-  },
-  {
+    "name": "stable-diffusion-webui-rembg",
     "git": "https://github.com/AUTOMATIC1111/stable-diffusion-webui-rembg.git",
+    "commit": "a4c07b857e73f3035f759876797fa6de986def3d",
     "target": "$FORGE_HOME/extensions/stable-diffusion-webui-rembg"
   },
   {
-    "git": "https://github.com/pkuliyi2015/sd-webui-stablesr.git",
-    "target": "$FORGE_HOME/extensions/sd-webui-stablesr"
+    "name": "StyleSelectorXL",
+    "git": "https://github.com/ahgsql/StyleSelectorXL.git",
+    "commit": "d538b0c47582e18e3e23decae0026e60632c8b7a",
+    "target": "$FORGE_HOME/extensions/StyleSelectorXL"
   },
   {
-    "git": "https://github.com/PladsElsker/sd-webui-inpaint-background.git",
-    "target": "$FORGE_HOME/extensions/sd-webui-inpaint-background"
+    "name": "test_my_prompt",
+    "git": "https://github.com/Extraltodeus/test_my_prompt.git",
+    "commit": "ddf736ef93560326741c4589d8a5e338881f8567",
+    "target": "$FORGE_HOME/extensions/test_my_prompt"
+  },
+  {
+    "name": "ultimate-upscale-for-automatic1111",
+    "git": "https://github.com/Coyote-A/ultimate-upscale-for-automatic1111.git",
+    "commit": "2322caa480535b1011a1f9c18126d85ea444f146",
+    "target": "$FORGE_HOME/extensions/ultimate-upscale-for-automatic1111"
+  },
+  {
+    "name": "webui-fooocus-prompt-expansion",
+    "git": "https://github.com/power88/webui-fooocus-prompt-expansion.git",
+    "commit": "84213ae3c299a38bc92bd491f37c958469818297",
+    "target": "$FORGE_HOME/extensions/webui-fooocus-prompt-expansion"
   }
 ]

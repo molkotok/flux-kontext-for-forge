@@ -150,6 +150,19 @@ You can easily add your own models to the installer. Supported sources:
    }
    ```
 
+   **For extensions with Python requirements:**
+   ```json
+   {
+     "git": "https://github.com/user/extension.git",
+     "target": "$FORGE_HOME/extensions/extension-name",
+     "commit": "abc123def456...",
+     "python_requirements": {
+       "ultralytics": "8.2.82",
+       "onnxruntime-gpu": "1.19.0"
+     }
+   }
+   ```
+
 ### 🔗 How to get the correct Google Drive link
 
 1. **Your link looks like this:**
@@ -184,8 +197,13 @@ You can easily add your own models to the installer. Supported sources:
 | **`filename`** | Specify desired filename (optional) | `"flux-lora-000006.safetensors"` |
 | **`size`** | Approximate file size in GB (optional) | `0.3` |
 | **`sha256`** | File checksum for verification (optional) | `"abc123..."` |
+| **`commit`** | Specific Git commit hash (for extensions) | `"abc123def456..."` |
+| **`python_requirements`** | Specific Python package versions (for extensions) | `{"ultralytics": "8.2.82"}` |
 
-**Note:** If `filename` is not specified for Google Drive links, a generic name will be used (e.g., `google-drive-<ID>.safetensors`).
+**Notes:** 
+- If `filename` is not specified for Google Drive links, a generic name will be used (e.g., `google-drive-<ID>.safetensors`)
+- `commit` field ensures reproducible installations by using specific extension versions
+- `python_requirements` field ensures compatible Python package versions to avoid dependency conflicts
 
 ### 🔧 Running after adding
 
@@ -197,6 +215,8 @@ bash bootstrap.sh
 **Important:** 
 - Make sure files on Google Drive have public access or link sharing enabled!
 - The installer **never updates existing extensions** to preserve compatibility
+- Extensions are installed with specific commits for maximum compatibility
+- Python requirements are automatically installed with specific versions to avoid conflicts
 - If you want to update an extension manually: `cd extension_folder && git pull`
 
 ---

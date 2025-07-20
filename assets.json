@@ -34,8 +34,7 @@
     "target": "$FORGE_HOME/extensions/forge2_flux_kontext",
     "python_requirements": {
       "ultralytics": "8.2.82",
-      "onnxruntime-gpu": "1.19.0",
-      "sdwi2iextender": "0.6.3"
+      "onnxruntime-gpu": "1.19.0"
     }
   },
   {
@@ -93,7 +92,13 @@
     "name": "sd-webui-old-photo-restoration",
     "git": "https://github.com/Haoming02/sd-webui-old-photo-restoration.git",
     "commit": "45cd9fb51358d2adba7c4a253eaeb01245c97c8f",
-    "target": "$FORGE_HOME/extensions/sd-webui-old-photo-restoration"
+    "target": "$FORGE_HOME/extensions/sd-webui-old-photo-restoration",
+    "python_requirements": {
+      "dlib": "20.0.0",
+      "opencv-python": "4.8.0.76",
+      "numpy": "1.26.4",
+      "pillow": "11.0.0"
+    }
   },
   {
     "name": "sd-webui-photopea-embed",
@@ -109,9 +114,11 @@
   },
   {
     "name": "sd-webui-reactor",
-    "git": "https://github.com/Gourieff/sd-webui-reactor.git",
-    "commit": "4493fd7133ba85386cd332e8e61c389d122b7d7e",
-    "target": "$FORGE_HOME/extensions/sd-webui-reactor"
+    "git": "https://github.com/Gourieff/sd-webui-reactor-sfw.git",
+    "target": "$FORGE_HOME/extensions/sd-webui-reactor",
+    "python_requirements": {
+      "onnxruntime-gpu": "1.19.0"
+    }
   },
   {
     "name": "sd-webui-toggle-dark-light",

@@ -552,7 +552,7 @@ download() {
 }
 
 clone_or_update() {
-    local giturl="$1" tgt="$2"
+    local giturl="$1" tgt="$2" commit="$3"
     
     # Convert path for git if needed
     local git_path=$(convert_path_for_curl "$tgt")
@@ -564,11 +564,36 @@ clone_or_update() {
         return 0
     else
         echo "📥 Cloning repository: $(basename "$tgt")"
-        if ! git clone --depth 1 "$giturl" "$git_path"; then
-            echo "❌ Failed to clone repository: $giturl"
-            return 1
+        if [ -n "$commit" ]; then
+            echo "   📌 Using specific commit: $commit"
+            if ! git clone --depth 1 "$giturl" "$git_path"; then
+                echo "❌ Failed to clone repository: $giturl"
+                return 1
+            fi
+            # Checkout specific commit
+            cd "$git_path" || {
+                echo "❌ Failed to change to repository directory: $git_path"
+                return 1
+            }
+            if ! git checkout "$commit" 2>/dev/null; then
+                echo "⚠️ Failed to checkout commit $commit, trying to fetch and checkout..."
+                if ! git fetch origin "$commit" && git checkout "$commit"; then
+                    echo "❌ Failed to checkout specific commit: $commit"
+                    echo "   Repository cloned but may be at different commit"
+                    cd - > /dev/null || true
+                    return 1
+                fi
+            fi
+            cd - > /dev/null || true
+            echo "✅ Successfully cloned and checked out commit: $(basename "$tgt") @ $commit"
+        else
+            echo "   📌 Using latest commit (no specific commit specified)"
+            if ! git clone --depth 1 "$giturl" "$git_path"; then
+                echo "❌ Failed to clone repository: $giturl"
+                return 1
+            fi
+            echo "✅ Successfully cloned: $(basename "$tgt")"
         fi
-        echo "✅ Successfully cloned: $(basename "$tgt")"
     fi
 }
 
@@ -579,17 +604,18 @@ total_count=0
 while IFS= read -r entry; do
     total_count=$((total_count + 1))
     
-  url=$(jq -r '.url? // empty' <<<"$entry")
-  giturl=$(jq -r '.git? // empty' <<<"$entry")
+    url=$(jq -r '.url? // empty' <<<"$entry")
+    giturl=$(jq -r '.git? // empty' <<<"$entry")
+    commit=$(jq -r '.commit? // empty' <<<"$entry")
     target_raw=$(jq -r '.target' <<<"$entry")
     tgt=$(expand_path "$target_raw")
     
-  if [ -n "$url" ]; then
+    if [ -n "$url" ]; then
         if ! download "$url" "$tgt" "$entry"; then
             failed_count=$((failed_count + 1))
         fi
-  elif [ -n "$giturl" ]; then
-        if ! clone_or_update "$giturl" "$tgt"; then
+    elif [ -n "$giturl" ]; then
+        if ! clone_or_update "$giturl" "$tgt" "$commit"; then
             failed_count=$((failed_count + 1))
         fi
     else
@@ -613,7 +639,7 @@ if [ $failed_count -eq 0 ]; then
     echo "   • Flux Kontext models are ready to use"
     echo "   • All files downloaded and verified"
     echo ""
-    echo "⚠️ Note: Existing extensions were not updated to preserve compatibility"
+    echo "⚠️ Note: Extensions were installed with specific commits for compatibility"
     echo "   To update manually: cd extension_folder && git pull"
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

@@ -551,8 +551,59 @@ download() {
     echo "✅ $(basename "$fname") downloaded and verified successfully"
 }
 
+# Function to install Python requirements
+install_python_requirements() {
+    local requirements_json="$1"
+    local extension_name="$2"
+    
+    if [ -z "$requirements_json" ] || [ "$requirements_json" = "null" ]; then
+        return 0
+    fi
+    
+    echo "📦 Installing Python requirements for $(basename "$extension_name")..."
+    
+    # Parse requirements from JSON
+    local packages=$(echo "$requirements_json" | jq -r 'to_entries[] | "\(.key)==\(.value)"' 2>/dev/null)
+    
+    if [ -z "$packages" ]; then
+        echo "   ⚠️ No valid requirements found"
+        return 0
+    fi
+    
+    local success_count=0
+    local total_count=0
+    
+    while IFS= read -r package_spec; do
+        if [ -n "$package_spec" ]; then
+            total_count=$((total_count + 1))
+            echo "   📦 Installing: $package_spec"
+            
+            # Try different pip commands
+            if python -m pip install --user "$package_spec" 2>/dev/null; then
+                echo "   ✅ Successfully installed: $package_spec"
+                success_count=$((success_count + 1))
+            elif python3 -m pip install --user "$package_spec" 2>/dev/null; then
+                echo "   ✅ Successfully installed: $package_spec"
+                success_count=$((success_count + 1))
+            else
+                echo "   ❌ Failed to install: $package_spec"
+                echo "   💡 You may need to install this manually: pip install $package_spec"
+            fi
+        fi
+    done <<< "$packages"
+    
+    if [ $success_count -eq $total_count ]; then
+        echo "✅ All Python requirements installed successfully for $(basename "$extension_name")"
+        return 0
+    else
+        echo "⚠️ Some Python requirements failed to install for $(basename "$extension_name")"
+        echo "   Success: $success_count/$total_count"
+        return 1
+    fi
+}
+
 clone_or_update() {
-    local giturl="$1" tgt="$2" commit="$3"
+    local giturl="$1" tgt="$2" commit="$3" requirements="$4"
     
     # Convert path for git if needed
     local git_path=$(convert_path_for_curl "$tgt")
@@ -594,6 +645,11 @@ clone_or_update() {
             fi
             echo "✅ Successfully cloned: $(basename "$tgt")"
         fi
+        
+        # Install Python requirements if specified
+        if [ -n "$requirements" ] && [ "$requirements" != "null" ]; then
+            install_python_requirements "$requirements" "$tgt"
+        fi
     fi
 }
 
@@ -607,6 +663,7 @@ while IFS= read -r entry; do
     url=$(jq -r '.url? // empty' <<<"$entry")
     giturl=$(jq -r '.git? // empty' <<<"$entry")
     commit=$(jq -r '.commit? // empty' <<<"$entry")
+    python_requirements=$(jq -r '.python_requirements? // empty' <<<"$entry")
     target_raw=$(jq -r '.target' <<<"$entry")
     tgt=$(expand_path "$target_raw")
     
@@ -615,7 +672,7 @@ while IFS= read -r entry; do
             failed_count=$((failed_count + 1))
         fi
     elif [ -n "$giturl" ]; then
-        if ! clone_or_update "$giturl" "$tgt" "$commit"; then
+        if ! clone_or_update "$giturl" "$tgt" "$commit" "$python_requirements"; then
             failed_count=$((failed_count + 1))
         fi
     else

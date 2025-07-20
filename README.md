@@ -17,7 +17,7 @@
 
 **Plus 19+ additional extensions:**
 - **[adetailer](https://github.com/Bing-su/adetailer)** - Automatic masking and inpainting
-- **[sd-webui-reactor](https://github.com/Gourieff/sd-webui-reactor)** - Fast face replacement (face swap)
+- **[sd-webui-reactor](https://github.com/Gourieff/sd-webui-reactor-sfw)** - Fast face replacement (face swap)
 - **[sd-webui-inpaint-anything](https://github.com/continue-revolution/sd-webui-inpaint-anything)** - Advanced inpainting with SAM
 - **[sd-webui-prompt-all-in-one](https://github.com/Physton/sd-webui-prompt-all-in-one)** - Enhanced prompt management
 - **[sd-webui-aspect-ratio-helper](https://github.com/thomasasfk/sd-webui-aspect-ratio-helper)** - Aspect ratio utilities
@@ -218,6 +218,10 @@ bash bootstrap.sh
 - Extensions are installed with specific commits for maximum compatibility
 - Python requirements are automatically installed with specific versions to avoid conflicts
 - If you want to update an extension manually: `cd extension_folder && git pull`
+- Some packages like `sdwi2iextender` may need manual installation if not available via pip
+- Problematic packages like `dlib` are handled with multiple fallback methods
+- `insightface` will try specific version first, then fallback to latest available
+- **dlib installation on Windows**: Uses dlib 20.0.0+ which has official Python 3.12 wheels
 
 ---
 
